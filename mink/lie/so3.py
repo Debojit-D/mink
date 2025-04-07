@@ -45,6 +45,11 @@ class SO3(MatrixLieGroup):
         wxyz = np.round(self.wxyz, 5)
         return f"{self.__class__.__name__}(wxyz={wxyz})"
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SO3):
+            return NotImplemented
+        return np.array_equal(self.wxyz, other.wxyz)
+
     def parameters(self) -> np.ndarray:
         return self.wxyz
 
@@ -79,7 +84,7 @@ class SO3(MatrixLieGroup):
     @classmethod
     def from_matrix(cls, matrix: np.ndarray) -> SO3:
         assert matrix.shape == (SO3.matrix_dim, SO3.matrix_dim)
-        wxyz = np.zeros(SO3.parameters_dim, dtype=np.float64)
+        wxyz = np.empty(SO3.parameters_dim, dtype=np.float64)
         mujoco.mju_mat2Quat(wxyz, matrix.ravel())
         return SO3(wxyz=wxyz)
 
@@ -109,7 +114,7 @@ class SO3(MatrixLieGroup):
 
     # Eq. 138.
     def as_matrix(self) -> np.ndarray:
-        mat = np.zeros(9, dtype=np.float64)
+        mat = np.empty(9, dtype=np.float64)
         mujoco.mju_quat2Mat(mat, self.wxyz)
         return mat.reshape(3, 3)
 

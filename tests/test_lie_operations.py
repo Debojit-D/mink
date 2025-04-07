@@ -84,6 +84,22 @@ class TestGroupSpecificOperations(absltest.TestCase):
 
     # SO3.
 
+    def test_so3_equality(self):
+        rot_1 = SO3.identity()
+        rot_2 = SO3.identity()
+        self.assertEqual(rot_1, rot_2)
+
+        rot_1 = SO3.from_x_radians(np.pi)
+        rot_2 = SO3.from_x_radians(np.pi)
+        self.assertEqual(rot_1, rot_2)
+
+        rot_1 = SO3.from_x_radians(np.pi)
+        rot_2 = SO3.from_x_radians(np.pi * 0.5)
+        self.assertNotEqual(rot_1, rot_2)
+
+        # Make sure different types are properly handled.
+        self.assertNotEqual(SO3.identity(), 5)
+
     def test_so3_rpy_bijective(self):
         T = SO3.sample_uniform()
         assert_transforms_close(T, SO3.from_rpy_radians(*T.as_rpy_radians()))
@@ -100,14 +116,50 @@ class TestGroupSpecificOperations(absltest.TestCase):
         with np.testing.assert_raises(AssertionError):
             np.testing.assert_allclose(T_c.wxyz, T.wxyz)
 
+    def test_so3_interpolate(self):
+        start = SO3.from_y_radians(np.pi)
+        end = SO3.from_y_radians(2 * np.pi)
+
+        assert_transforms_close(start.interpolate(end), SO3.from_y_radians(np.pi * 1.5))
+        assert_transforms_close(
+            start.interpolate(end, alpha=0.75), SO3.from_y_radians(np.pi * 1.75)
+        )
+
+        assert_transforms_close(start.interpolate(end, alpha=0.0), start)
+        assert_transforms_close(start.interpolate(end, alpha=1.0), end)
+
+        expected_error_message = "Expected alpha within [0.0, 1.0]"
+        with self.assertRaises(ValueError) as cm:
+            start.interpolate(end, alpha=-1.0)
+        self.assertIn(expected_error_message, str(cm.exception))
+        with self.assertRaises(ValueError) as cm:
+            start.interpolate(end, alpha=2.0)
+        self.assertIn(expected_error_message, str(cm.exception))
+
+    # SE3.
+
+    def test_se3_equality(self):
+        pose_1 = SE3.identity()
+        pose_2 = SE3.identity()
+        self.assertEqual(pose_1, pose_2)
+
+        pose_1 = SE3.from_translation(np.array([1.0, 0.0, 0.0]))
+        pose_2 = SE3.from_translation(np.array([1.0, 0.0, 0.0]))
+        self.assertEqual(pose_1, pose_2)
+
+        pose_1 = SE3.from_translation(np.array([1.0, 2.0, 3.0]))
+        pose_2 = SE3.from_translation(np.array([1.0, 0.0, 0.0]))
+        self.assertNotEqual(pose_1, pose_2)
+
+        # Make sure different types are properly handled.
+        self.assertNotEqual(SE3.identity(), 5)
+
     def test_se3_apply(self):
         T = SE3.sample_uniform()
         v = np.random.rand(3)
         np.testing.assert_allclose(
             T.apply(v), T.as_matrix()[:3, :3] @ v + T.translation()
         )
-
-    # SE3.
 
     def test_se3_from_mocap_id(self):
         xml_str = """
@@ -161,6 +213,37 @@ class TestGroupSpecificOperations(absltest.TestCase):
         data = mujoco.MjData(model)
         with self.assertRaises(InvalidMocapBody):
             SE3.from_mocap_name(model, data, "test")
+
+    def test_se3_interpolate(self):
+        start = SE3.from_rotation_and_translation(
+            SO3.from_x_radians(0.0), np.array([0, 0, 0])
+        )
+        end = SE3.from_rotation_and_translation(
+            SO3.from_x_radians(np.pi), np.array([1, 0, 0])
+        )
+
+        assert_transforms_close(
+            start.interpolate(end),
+            SE3.from_rotation_and_translation(
+                SO3.from_x_radians(np.pi * 0.5), np.array([0.5, 0, 0])
+            ),
+        )
+        assert_transforms_close(
+            start.interpolate(end, alpha=0.75),
+            SE3.from_rotation_and_translation(
+                SO3.from_x_radians(np.pi * 0.75), np.array([0.75, 0, 0])
+            ),
+        )
+        assert_transforms_close(start.interpolate(end, alpha=0.0), start)
+        assert_transforms_close(start.interpolate(end, alpha=1.0), end)
+
+        expected_error_message = "Expected alpha within [0.0, 1.0]"
+        with self.assertRaises(ValueError) as cm:
+            start.interpolate(end, alpha=-1.0)
+        self.assertIn(expected_error_message, str(cm.exception))
+        with self.assertRaises(ValueError) as cm:
+            start.interpolate(end, alpha=2.0)
+        self.assertIn(expected_error_message, str(cm.exception))
 
 
 if __name__ == "__main__":

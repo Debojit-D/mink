@@ -2,7 +2,7 @@
 
 import itertools
 from dataclasses import dataclass
-from typing import List, Sequence, Union
+from typing import List, Sequence, Tuple, Union
 
 import mujoco
 import numpy as np
@@ -13,7 +13,7 @@ from .limit import Constraint, Limit
 # Type aliases.
 Geom = Union[int, str]
 GeomSequence = Sequence[Geom]
-CollisionPair = tuple[GeomSequence, GeomSequence]
+CollisionPair = Tuple[GeomSequence, GeomSequence]
 CollisionPairs = Sequence[CollisionPair]
 
 
@@ -231,7 +231,7 @@ class CollisionAvoidanceLimit(Limit):
     def _homogenize_geom_id_list(self, geom_list: GeomSequence) -> List[int]:
         """Take a heterogeneous list of geoms (specified via ID or name) and return
         a homogenous list of IDs (int)."""
-        list_of_int: list[int] = []
+        list_of_int: List[int] = []
         for g in geom_list:
             if isinstance(g, int):
                 list_of_int.append(g)

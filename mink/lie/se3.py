@@ -32,6 +32,11 @@ class SE3(MatrixLieGroup):
         xyz = np.round(self.wxyz_xyz[4:], 5)
         return f"{self.__class__.__name__}(wxyz={quat}, xyz={xyz})"
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SE3):
+            return NotImplemented
+        return np.array_equal(self.wxyz_xyz, other.wxyz_xyz)
+
     def copy(self) -> SE3:
         return SE3(wxyz_xyz=np.array(self.wxyz_xyz))
 
@@ -54,10 +59,7 @@ class SE3(MatrixLieGroup):
     @classmethod
     def from_rotation(cls, rotation: SO3) -> SE3:
         return SE3.from_rotation_and_translation(
-            rotation=rotation,
-            translation=np.zeros(
-                SE3.space_dim,
-            ),
+            rotation=rotation, translation=np.zeros(SE3.space_dim)
         )
 
     @classmethod

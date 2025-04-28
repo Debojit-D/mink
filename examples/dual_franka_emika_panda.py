@@ -63,9 +63,9 @@ def define_waypoints(data, site_ref_left, site_ref_right, target_quat_left, targ
 
     # Lift positions
     lifted_left_pos  = middle_left_pos.copy()
-    lifted_left_pos[2] += 0.26
+    lifted_left_pos[2] += 0.36
     lifted_right_pos = middle_right_pos.copy()
-    lifted_right_pos[2] += 0.26
+    lifted_right_pos[2] += 0.36
 
     return left_waypoints, right_waypoints, lifted_left_pos, lifted_right_pos
 

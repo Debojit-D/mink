@@ -69,8 +69,8 @@ def main():
         initial_target_position = data.mocap_pos[0].copy()
 
         # Circular trajectory parameters
-        amp = 0.12
-        freq = 0.4
+        amp = 0.10
+        freq = 0.2
 
         # We'll track time ourselves for a smoother trajectory
         local_time = 0.0

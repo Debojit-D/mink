@@ -6,9 +6,40 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Added support for Python 3.8.
+- Merged task and limit exceptions to base exceptions file.
+- Improved the documentation for certain tasks.
+
+## [0.0.10] - 2025-04-22
+
+### Changed
+
+- Update so3.py log function to use arctan2 instead of arccos for better numerical stability.
+
+## [0.0.9] - 2025-04-21
+
+### Changed
+
+- Switch Lie algebra implementation to use mujoco functions.
+- Rewrite some Lie algebra methods to use derivations with least operations.
+- Relax tolerances on test_solve_ik.py test_single_task_convergence.
+- Relax numpy version requirement.
+
+## [0.0.8] - 2025-04-21
+
+### Added
+
 - Added equality operators for SE3 and SO3.
 - Added matrix Lie group interpolation.
+
+### Changed
+
+- Remove quadprog dependency and switch to `daqp` for examples.
+
+## [0.0.7] - 2025-03-28
+
+### Added
+
+- Added support for Python 3.8.
 
 ## [0.0.6] - 2025-03-15
 

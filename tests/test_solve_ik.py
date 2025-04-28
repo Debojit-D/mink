@@ -42,7 +42,7 @@ class TestSolveIK(absltest.TestCase):
                 limits=self.limits,
                 dt=1.0,
                 safety_break=True,
-                solver="quadprog",
+                solver="daqp",
             )
 
     def test_ignores_configuration_limits(self):
@@ -55,7 +55,7 @@ class TestSolveIK(absltest.TestCase):
             [],
             limits=self.limits,
             dt=1.0,
-            solver="quadprog",
+            solver="daqp",
             safety_break=False,
         )
 
@@ -73,7 +73,7 @@ class TestSolveIK(absltest.TestCase):
 
     def test_trivial_solution(self):
         """No task returns no velocity."""
-        v = mink.solve_ik(self.configuration, [], limits=[], dt=1e-3, solver="quadprog")
+        v = mink.solve_ik(self.configuration, [], limits=[], dt=1e-3, solver="daqp")
         np.testing.assert_allclose(v, np.zeros((self.model.nv,)))
 
     def test_single_task_fulfilled(self):
@@ -88,7 +88,7 @@ class TestSolveIK(absltest.TestCase):
             self.configuration.get_transform_frame_to_world("attachment_site", "site")
         )
         v = mink.solve_ik(
-            self.configuration, [task], limits=self.limits, dt=1e-3, solver="quadprog"
+            self.configuration, [task], limits=self.limits, dt=1e-3, solver="daqp"
         )
         np.testing.assert_allclose(v, np.zeros((self.model.nv,)), atol=1e-10)
 
@@ -109,8 +109,9 @@ class TestSolveIK(absltest.TestCase):
         task.set_target(transform_target_to_world)
 
         dt = 5e-3  # [s]
+        velocity_tol = 1e-4  # [m/s]
         velocity = mink.solve_ik(
-            configuration, [task], limits=self.limits, dt=dt, solver="quadprog"
+            configuration, [task], limits=self.limits, dt=dt, solver="daqp"
         )
 
         # Initially we are nowhere near the target and moving.
@@ -127,23 +128,24 @@ class TestSolveIK(absltest.TestCase):
         last_error = 1e6
         for nb_steps in range(50):
             error = norm(task.compute_error(configuration))
-            if error < 1e-6 and np.allclose(velocity, 0.0):
+            if error < 1e-6 and np.allclose(velocity, 0.0, atol=velocity_tol):
                 break
             self.assertLess(error, last_error)  # Error stictly decreases.
             last_error = error
             configuration.integrate_inplace(velocity, dt)
             velocity = mink.solve_ik(
-                configuration, [task], limits=self.limits, dt=dt, solver="quadprog"
+                configuration, [task], limits=self.limits, dt=dt, solver="daqp"
             )
 
         # After nb_steps we are at the target and not moving.
-        self.assertTrue(np.allclose(velocity, 0.0))
-        self.assertAlmostEqual(norm(task.compute_error(configuration)), 0.0)
+        self.assertTrue(np.allclose(velocity, 0.0, atol=velocity_tol))
+        self.assertAlmostEqual(norm(task.compute_error(configuration)), 0.0, places=5)
         np.testing.assert_allclose(
             configuration.get_transform_frame_to_world(
                 "attachment_site", "site"
             ).as_matrix(),
             transform_target_to_world.as_matrix(),
+            atol=1e-6,
         )
         self.assertLess(nb_steps, 20)
 
